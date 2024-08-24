@@ -18,6 +18,7 @@ import {
   SelectContent,
   SelectItem,
 } from '@/components/ui/select';
+import { Progress } from '@/components/ui/progress';
 import { XIcon } from 'lucide-react';
 import backendApiInstance from '@/services';
 
@@ -26,7 +27,8 @@ export default function Component() {
   const [contentType, setContentType] = useState<string>('text');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [urlInput, setUrlInput] = useState<string>('');
+  const [urlInput, setUrlInput] = useState<string>(''); // To store URL input
+  const [uploadProgress, setUploadProgress] = useState<number>(0); // To track upload progress
 
   const handleDragOver = (event: DragEvent<HTMLDivElement>): void => {
     event.preventDefault();
@@ -63,25 +65,47 @@ export default function Component() {
 
       const formData = new FormData();
 
-      // Append files to the form data
-      selectedFiles.forEach((file, index) => {
-        formData.append(`files[${index}]`, file);
+      selectedFiles.forEach((file) => {
+        formData.append('files', file);
       });
 
-      // Append other data
       formData.append('contentType', contentType);
-      formData.append('url', urlInput);
+      if (urlInput) {
+        formData.append('url', urlInput);
+      }
 
       try {
-        const response = await backendApiInstance.post('/api/upload', formData);
+        const response = await backendApiInstance.post(
+          '/api/upload',
+          formData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+            onUploadProgress: (progressEvent) => {
+              const { loaded, total } = progressEvent;
+
+              if (total) {
+                const progress = Math.round((loaded * 100) / total);
+                setUploadProgress(progress); // Update progress state
+                console.log(`Upload Progress: ${progress}%`);
+              } else {
+                console.log(`Uploaded ${loaded} bytes`); // If total is undefined, log only loaded bytes
+              }
+            },
+          }
+        );
 
         if (response.status === 200) {
-          // Simulate submission process and update progress
+          console.log('Submission successful.');
+          setUploadProgress(100); // Set to 100% on successful completion
         } else {
           console.error('Submission failed.');
+          setUploadProgress(0); // Reset progress on failure
         }
       } catch (error) {
         console.error('Error during submission:', error);
+        setUploadProgress(0); // Reset progress on error
       } finally {
         setIsSubmitting(false);
       }
@@ -163,6 +187,13 @@ export default function Component() {
               {selectedFiles.length > 0 ? 'Add more files' : 'Browse'}
             </Button>
           </div>
+
+          {uploadProgress > 0 && (
+            <Progress
+              value={uploadProgress}
+              className='w-full'
+            />
+          )}
 
           <div className='grid grid-cols-[auto_1fr] items-center gap-2 rounded-md border p-4'>
             <LinkIcon className='h-6 w-6 text-muted-foreground' />
