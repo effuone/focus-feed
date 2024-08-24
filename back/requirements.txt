@@ -27,7 +27,7 @@ markdown-it-py==3.0.0
 MarkupSafe==2.1.5
 mdurl==0.1.2
 prompt_toolkit==3.0.47
-psycopg2==2.9.9
+psycopg2-binary
 pydantic==2.8.2
 pydantic-settings==2.4.0
 pydantic_core==2.20.1

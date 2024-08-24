@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   db:
-    image: postgres:15
+    image: postgres:14
     environment:
       POSTGRES_USER: username
       POSTGRES_PASSWORD: password
@@ -13,10 +13,13 @@ services:
       - "5432:5432"
     networks:
       - default
-  
 
   redis:
-    image: redis:7
+    image: redis
+    ports:
+      - "6379:6379"  
+    networks:
+      - default
 
   web:
     build: .
