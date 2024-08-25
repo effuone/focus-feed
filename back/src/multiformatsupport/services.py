@@ -2,6 +2,7 @@ import io
 import mimetypes
 import os
 import subprocess
+from typing import Dict, List
 
 import openai
 import PyPDF2
@@ -11,8 +12,9 @@ from langchain.schema import AIMessage, HumanMessage
 from PIL import Image
 from pydub import AudioSegment
 from youtube_transcript_api import YouTubeTranscriptApi
+from pytube import YouTube
 
-from ..app.config import settings
+from app.config import settings
 
 openai.api_key = settings.openai_api_key
 
@@ -99,17 +101,52 @@ def process_image(content):
     return text if text.strip() else "No text could be extracted from the image"
 
 
-def process_youtube_url(youtube_url: str) -> str:
+def process_youtube_url(youtube_url: str) -> List[Dict[str, str]]:
     video_id = youtube_url.split("v=")[1].split("&")[0]
     transcript = YouTubeTranscriptApi.get_transcript(video_id)
-    transcript_text = "\n".join([entry['text'] for entry in transcript])
-    return transcript_text
+    
+    # Structure the transcript with timecodes
+    structured_transcript = [
+        {
+            'timestamp': format_time(entry['start']),
+            'text': entry['text']
+        }
+        for entry in transcript
+    ]
+    
+    return structured_transcript
 
+def format_time(seconds: float) -> str:
+    minutes, seconds = divmod(int(seconds), 60)
+    hours, minutes = divmod(minutes, 60)
+    if hours > 0:
+        return f"{hours:02}:{minutes:02}:{seconds:02}"
+    else:
+        return f"{minutes:02}:{seconds:02}"
 
-def summarize_with_openai_and_memory(text, memory):
+def get_video_details(youtube_url: str) -> Dict[str, str]:
+    yt = YouTube(youtube_url)
+    video_details = {
+        "videoName": yt.title,
+        "authorName": yt.author,
+        "duration": format_time(yt.length)  # yt.length returns duration in seconds
+    }
+    return video_details
+
+def summarize_with_openai_and_memory(youtube_url: str, memory) -> Dict[str, any]:
+    transcript_with_timecodes = process_youtube_url(youtube_url)
+    transcript_text = "\n".join([entry['text'] for entry in transcript_with_timecodes])
+    
     messages = [
-        {"role": "system", "content": "You are a helpful assistant that summarizes text."},
-        {"role": "user", "content": f"Please summarize the following text:\n\n{text}"}
+        {"role": "system", "content": (
+            "You are an advanced language model and assistant capable of analyzing, summarizing, and extracting key information from text. "
+            "Your task is to provide concise, accurate, and insightful summaries of complex content, while also identifying and highlighting "
+            "the most important points and insights. You should ensure that the summary is clear and easy to understand, even for someone who "
+            "may not be familiar with the original content. Additionally, you should format the summary in a way that is engaging and informative, "
+            "using bullet points or numbered lists where appropriate to organize the information. Please also ensure that any technical jargon "
+            "is explained or simplified to make the content accessible to a broad audience."
+        )},
+        {"role": "user", "content": f"Please summarize the following text:\n\n{transcript_text}"}
     ]
     
     for message in memory.chat_memory.messages:
@@ -128,9 +165,23 @@ def summarize_with_openai_and_memory(text, memory):
                     "summary": {
                         "type": "string",
                         "description": "The generated summary"
+                    },
+                    "highlights": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "Key highlights from the text"
+                    },
+                    "insights": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "Key insights from the text"
                     }
                 },
-                "required": ["summary"]
+                "required": ["summary", "highlights", "insights"]
             }
         }
     ]
@@ -143,9 +194,29 @@ def summarize_with_openai_and_memory(text, memory):
     )
 
     function_call = response.choices[0].message['function_call']
-    summary = eval(function_call['arguments'])['summary']
+    result = eval(function_call['arguments'])
+    
+    summary = result['summary']
+    highlights = result['highlights']
+    insights = result['insights']
 
-    memory.chat_memory.add_user_message(text)
+    memory.chat_memory.add_user_message(transcript_text)
     memory.chat_memory.add_ai_message(summary)
 
-    return summary
+    video_details = get_video_details(youtube_url)
+
+    url_embed = f"https://www.youtube.com/embed/{youtube_url.split('v=')[1].split('&')[0]}"
+
+    video_summary = {
+        "videoName": video_details["videoName"],
+        "authorName": video_details["authorName"],
+        "duration": video_details["duration"],
+        "urlEmbed": url_embed,
+        "readTime": "1 min 4 secs",  # You might calculate this dynamically based on transcript length
+        "summary": summary,
+        "transcript": transcript_with_timecodes,
+        "highlights": highlights,
+        "insights": insights
+    }
+
+    return video_summary
