@@ -107,28 +107,24 @@ def process_youtube_url(youtube_url: str) -> str:
 
 
 def summarize_with_openai_and_memory(text, memory):
-    # Prepare the system message and the initial user message
     messages = [
         {"role": "system", "content": "You are a helpful assistant that provides detailed summaries of text."},
         {"role": "user", "content": f"Please summarize the following text in detail:\n\n{text}"}
     ]
-    
-    # Include previous conversation history from memory
     for message in memory.chat_memory.messages:
         if isinstance(message, HumanMessage):
             messages.append({"role": "user", "content": message.content})
         elif isinstance(message, AIMessage):
             messages.append({"role": "assistant", "content": message.content})
 
-
     response = client.chat.completions.create(
-        model="gpt-4o-mini",  # Change to the valid model you want to use
+        model="gpt-4o-mini",
         messages=messages
     )
 
-    # Extract the generated summary from the response
+
     summary = response.choices[0].message.content.strip()
-    # Add the current user message and AI response to memory
+
     memory.chat_memory.add_user_message(text)
     memory.chat_memory.add_ai_message(summary)
 

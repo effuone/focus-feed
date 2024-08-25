@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import axios from 'axios';
 import { XIcon } from 'lucide-react';
+import Image from 'next/image';
 import { ChangeEvent, DragEvent, useState } from 'react';
 
 export default function Component() {
@@ -219,7 +220,13 @@ export default function Component() {
                   {previews.map((preview, index) => (
                     <div key={index} className="mb-2">
                       {preview.type.startsWith('image/') && (
-                        <img src={preview.url} alt={`Image Preview ${index}`} className="rounded-md max-h-48" />
+                        <Image
+                          src={preview.url}
+                          alt={`Image Preview ${index}`}
+                          width={500}
+                          height={500}
+                          className="rounded-md max-h-48"
+                        />
                       )}
                       {preview.type === 'application/pdf' && (
                         <embed src={preview.url} type="application/pdf" width="100%" height="500px" />
