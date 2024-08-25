@@ -7,10 +7,12 @@ import openai
 import PyPDF2
 import pytesseract
 import speech_recognition as sr
-from ..app.config import settings
-from langchain.schema import AIMessage, HumanMessage, SystemMessage
+from langchain.schema import AIMessage, HumanMessage
 from PIL import Image
 from pydub import AudioSegment
+from youtube_transcript_api import YouTubeTranscriptApi
+
+from ..app.config import settings
 
 openai.api_key = settings.openai_api_key
 
@@ -35,6 +37,7 @@ async def process_file(filename, content):
     else:
         raise ValueError(f"Unsupported file type: {mime_type}")
 
+
 def process_pdf(content):
     pdf_reader = PyPDF2.PdfReader(io.BytesIO(content))
     text = ""
@@ -45,17 +48,13 @@ def process_pdf(content):
 
 def process_audio(content, mime_type):
     try:
-        # Guessing format based on mime_type or using 'raw' as fallback
         format = mime_type.split('/')[-1] if mime_type else 'raw'
-
-        # Save content to a temporary file to debug with ffmpeg directly
         input_path = '/tmp/input_audio'
         output_path = '/tmp/output_audio.wav'
 
         with open(input_path, 'wb') as f:
             f.write(content)
 
-        # Run ffmpeg directly with the -y flag to force overwrite
         result = subprocess.run(
             ['ffmpeg', '-y', '-i', input_path, '-f', 'wav', output_path],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE
@@ -66,7 +65,6 @@ def process_audio(content, mime_type):
             print(result.stderr.decode())
             return "Failed to decode audio file"
 
-        # Now load the wav audio from the output
         with open(output_path, 'rb') as wav_file:
             audio = wav_file.read()
             recognizer = sr.Recognizer()
@@ -81,12 +79,10 @@ def process_audio(content, mime_type):
                 return f"Could not request results from the speech recognition service: {e}"
 
     except Exception as e:
-        # Log the error and return a meaningful message
         print(f"Failed to process audio: {e}")
         return f"Failed to process audio: {e}"
 
     finally:
-
         if os.path.exists(input_path):
             os.remove(input_path)
         if os.path.exists(output_path):
@@ -103,13 +99,19 @@ def process_image(content):
     return text if text.strip() else "No text could be extracted from the image"
 
 
+def process_youtube_url(youtube_url: str) -> str:
+    video_id = youtube_url.split("v=")[1].split("&")[0]
+    transcript = YouTubeTranscriptApi.get_transcript(video_id)
+    transcript_text = "\n".join([entry['text'] for entry in transcript])
+    return transcript_text
+
+
 def summarize_with_openai_and_memory(text, memory):
     messages = [
         {"role": "system", "content": "You are a helpful assistant that summarizes text."},
         {"role": "user", "content": f"Please summarize the following text:\n\n{text}"}
     ]
     
-    # Add previous conversation to messages
     for message in memory.chat_memory.messages:
         if isinstance(message, HumanMessage):
             messages.append({"role": "user", "content": message.content})
@@ -134,7 +136,7 @@ def summarize_with_openai_and_memory(text, memory):
     ]
 
     response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",  # Use the appropriate model
+        model="gpt-3.5-turbo",
         messages=messages,
         functions=functions,
         function_call={"name": "generate_summary"}
@@ -143,7 +145,6 @@ def summarize_with_openai_and_memory(text, memory):
     function_call = response.choices[0].message['function_call']
     summary = eval(function_call['arguments'])['summary']
 
-    # Add the summary to memory
     memory.chat_memory.add_user_message(text)
     memory.chat_memory.add_ai_message(summary)
 
