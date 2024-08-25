@@ -1,79 +1,71 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import {
   Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
 } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react';
+import { useState } from 'react';
 
 interface Question {
   prompt: string;
   options: string[];
 }
 
+const questions: Question[] = [
+  {
+    prompt: 'What type of content do you most often engage with?',
+    options: ['Books', 'Articles', 'Podcasts', 'Videos', 'Social Media'],
+  },
+  {
+    prompt: 'How much time do you typically spend learning each day?',
+    options: [
+      'Less than 15 minutes',
+      '15-30 minutes',
+      '30-60 minutes',
+      'More than an hour',
+    ],
+  },
+  {
+    prompt: 'What is your primary goal for using FocusFeed?',
+    options: [
+      'Stay up-to-date with industry trends',
+      'Deep dive into specific topics',
+      'Improve general knowledge',
+      'Enhance professional skills',
+    ],
+  },
+  {
+    prompt: 'Which feature of FocusFeed excites you the most?',
+    options: [
+      'AI-driven video summaries',
+      'Personalized content recommendations',
+      'Multi-format support',
+      'TikTok-style presentation',
+    ],
+  },
+  {
+    prompt: 'How do you prefer to consume educational content?',
+    options: [
+      'Short, bite-sized pieces',
+      'In-depth, long-form content',
+      'Interactive quizzes and exercises',
+      'A mix of different formats',
+    ],
+  },
+];
+
 export default function OnboardingQuiz() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
-  const [userResponses, setUserResponses] = useState<Record<number, number>>(
-    {}
-  );
+  const [userResponses, setUserResponses] = useState<Record<number, number>>({});
   const [isComplete, setIsComplete] = useState<boolean>(false);
-
-  const questions: Question[] = [
-    {
-      prompt: 'What type of content do you most often engage with?',
-      options: ['Books', 'Articles', 'Podcasts', 'Videos', 'Social Media'],
-    },
-    {
-      prompt: 'How much time do you typically spend learning each day?',
-      options: [
-        'Less than 15 minutes',
-        '15-30 minutes',
-        '30-60 minutes',
-        'More than an hour',
-      ],
-    },
-    {
-      prompt: 'What is your primary goal for using FocusFeed?',
-      options: [
-        'Stay up-to-date with industry trends',
-        'Deep dive into specific topics',
-        'Improve general knowledge',
-        'Enhance professional skills',
-      ],
-    },
-    {
-      prompt: 'Which feature of FocusFeed excites you the most?',
-      options: [
-        'AI-driven video summaries',
-        'Personalized content recommendations',
-        'Multi-format support',
-        'TikTok-style presentation',
-      ],
-    },
-    {
-      prompt: 'How do you prefer to consume educational content?',
-      options: [
-        'Short, bite-sized pieces',
-        'In-depth, long-form content',
-        'Interactive quizzes and exercises',
-        'A mix of different formats',
-      ],
-    },
-  ];
-
-  useEffect(() => {
-    if (currentQuestionIndex >= questions.length) {
-      setIsComplete(true);
-    }
-  }, [currentQuestionIndex, questions.length]);
 
   const handleAnswerSelect = (questionIndex: number, answerIndex: number) => {
     setUserResponses((prevResponses) => ({
@@ -161,6 +153,7 @@ export default function OnboardingQuiz() {
         onClick={handlePreviousQuestion}
         disabled={currentQuestionIndex === 0}
         className='flex items-center'
+        aria-label='Previous Question'
       >
         <ArrowLeft className='mr-2 h-4 w-4' /> Previous
       </Button>
@@ -168,6 +161,7 @@ export default function OnboardingQuiz() {
         onClick={handleNextQuestion}
         disabled={userResponses[currentQuestionIndex] === undefined}
         className='flex items-center'
+        aria-label={currentQuestionIndex === questions.length - 1 ? 'Finish' : 'Next'}
       >
         {currentQuestionIndex === questions.length - 1 ? 'Finish' : 'Next'}{' '}
         <ArrowRight className='ml-2 h-4 w-4' />
