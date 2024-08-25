@@ -59,3 +59,4 @@ openai==0.28
 Pillow
 pytesseract
 pydub
+youtube_transcript_api
