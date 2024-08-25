@@ -13,11 +13,6 @@ from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config import settings
-from pdf.api import router as pdf_router
-from app.db import Base, async_engine, get_async_db
-from multiformatsupport.api import router as multiformat_router
-
 load_dotenv(Path(__file__).parent.parent / '.env')
 
 app = FastAPI()
@@ -60,3 +55,5 @@ app.include_router(pdf_router, prefix="/pdf", tags=["pdf"])
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
 
 app.include_router(multiformat_router, prefix="/multiformat")
+
+app.include_router(auth_router, prefix="/auth", tags=["auth"])
