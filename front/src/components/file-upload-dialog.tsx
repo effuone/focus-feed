@@ -91,7 +91,7 @@ export default function Component() {
 
     try {
       const response = await axios.post(
-        'http://localhost:8000/multiformat/submit',
+        'https://focus-feed-production.up.railway.app/multiformat/submit',
         formData,
         {
           headers: {
