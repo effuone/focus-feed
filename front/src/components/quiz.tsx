@@ -180,7 +180,7 @@ export default function OnboardingQuiz() {
         <CheckCircle className='mx-auto h-16 w-16 text-green-500' />
         <h2 className='mt-4 text-3xl font-bold text-primary'>All Set!</h2>
         <p className='mt-2 text-muted-foreground'>
-          Thank you for completing the quiz. We're excited to personalize your
+          Thank you for completing the quiz. We&apos;re excited to personalize your
           FocusFeed experience!
         </p>
       </div>
@@ -211,7 +211,7 @@ export default function OnboardingQuiz() {
             Welcome to FocusFeed!
           </CardTitle>
           <CardDescription>
-            Let's personalize your learning experience. Answer a few quick
+            Let&apos;s personalize your learning experience. Answer a few quick
             questions to help us tailor content to your preferences.
           </CardDescription>
         </CardHeader>
