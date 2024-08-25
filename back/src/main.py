@@ -3,18 +3,25 @@ from pathlib import Path
 import redis.asyncio as aioredis
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException
-from .multiformatsupport.api import router as multiformat_router
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .app.config import settings
 from .app.db import Base, async_engine, get_async_db
+from .multiformatsupport.api import router as multiformat_router
 
 load_dotenv(Path(__file__).parent.parent / '.env')
 
 app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 redis_client = aioredis.from_url(settings.redis_url)
 
