@@ -16,12 +16,17 @@ async def submit(
     memory = Depends(get_memory)
 ):
     if files:
+        # Handle file uploads
+        results = []
         for file in files:
             content = await file.read()
             processed_text = await process_file(file.filename, content)
             summary = summarize_with_openai_and_memory(processed_text, memory)
-
-        return {"filename": file.filename, "summary": summary}
+            results.append({
+                "filename": file.filename,
+                "summary": summary
+            })
+        return results
 
     elif youtube_url:
         # Handle YouTube URL
