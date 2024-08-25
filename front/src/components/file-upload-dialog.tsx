@@ -1,34 +1,35 @@
 'use client';
 
-import { useState, DragEvent, ChangeEvent } from 'react';
+import { Button } from '@/components/ui/button';
 import {
   Card,
+  CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
-  CardContent,
 } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
 import {
   Select,
-  SelectTrigger,
-  SelectValue,
   SelectContent,
   SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select';
-import { Progress } from '@/components/ui/progress';
-import { XIcon } from 'lucide-react';
 import backendApiInstance from '@/services';
+import { XIcon } from 'lucide-react';
+import { ChangeEvent, DragEvent, useState } from 'react';
 
-export default function Component() {
+export default function FileUploadDialog() {
   const [isDragOver, setIsDragOver] = useState<boolean>(false);
   const [contentType, setContentType] = useState<string>('text');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [urlInput, setUrlInput] = useState<string>(''); // To store URL input
   const [uploadProgress, setUploadProgress] = useState<number>(0); // To track upload progress
+  const [summaries, setSummaries] = useState<string[]>([]); // State to store summaries
 
   const handleDragOver = (event: DragEvent<HTMLDivElement>): void => {
     event.preventDefault();
@@ -71,12 +72,12 @@ export default function Component() {
 
       formData.append('contentType', contentType);
       if (urlInput) {
-        formData.append('url', urlInput);
+        formData.append('url', urlInput); // Append the URL to the form data
       }
 
       try {
         const response = await backendApiInstance.post(
-          '/api/upload',
+          'https://focus-feed-production.up.railway.app/multiformat/upload', // Adjust endpoint depending on your backend route
           formData,
           {
             headers: {
@@ -90,7 +91,7 @@ export default function Component() {
                 setUploadProgress(progress); // Update progress state
                 console.log(`Upload Progress: ${progress}%`);
               } else {
-                console.log(`Uploaded ${loaded} bytes`); // If total is undefined, log only loaded bytes
+                console.log(`Uploaded ${loaded} bytes`);
               }
             },
           }
@@ -99,6 +100,7 @@ export default function Component() {
         if (response.status === 200) {
           console.log('Submission successful.');
           setUploadProgress(100); // Set to 100% on successful completion
+          setSummaries(response.data.summaries || []); // Store the summaries in state
         } else {
           console.error('Submission failed.');
           setUploadProgress(0); // Reset progress on failure
@@ -199,7 +201,7 @@ export default function Component() {
             <LinkIcon className='h-6 w-6 text-muted-foreground' />
             <Input
               type='text'
-              placeholder='Enter a URL'
+              placeholder='Enter a YouTube URL'
               className='border-0 p-0 focus:ring-0'
               value={urlInput}
               onChange={(e) => setUrlInput(e.target.value)}
@@ -230,6 +232,22 @@ export default function Component() {
           >
             {isSubmitting ? 'Submitting...' : 'Submit'}
           </Button>
+
+          {summaries.length > 0 && (
+            <div className='mt-4'>
+              <h3 className='text-lg font-medium mb-2'>Summaries:</h3>
+              <ul className='space-y-2'>
+                {summaries.map((summary, index) => (
+                  <li
+                    key={index}
+                    className='bg-muted rounded-md p-2'
+                  >
+                    <p>{summary}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
