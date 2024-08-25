@@ -60,7 +60,7 @@ def process_audio(content, mime_type):
             f.write(content)
 
         result = subprocess.run(
-            ['ffmpeg', '-y', '-i', input_path, '-f', 'wav', output_path],
+            ['/usr/bin/ffmpeg', '-y', '-i', input_path, '-f', 'wav', output_path],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
 
