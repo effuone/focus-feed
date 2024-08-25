@@ -61,3 +61,5 @@ Pillow
 pytesseract
 pydub
 youtube_transcript_api
+python-jose
+passlib

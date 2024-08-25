@@ -1,19 +1,17 @@
 from pathlib import Path
 
 import redis.asyncio as aioredis
+from app.config import settings
+from app.db import Base, async_engine, get_async_db
+from auth.auth import router as auth_router
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from multiformatsupport.api import router as multiformat_router
+from pdf.api import router as pdf_router
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.ext.asyncio import AsyncSession
-
-
-from .app.config import settings
-from .pdf.api import router as pdf_router
-from .app.db import Base, async_engine, get_async_db
-from .multiformatsupport.api import router as multiformat_router
-
 
 load_dotenv(Path(__file__).parent.parent / '.env')
 
@@ -54,5 +52,6 @@ async def check_health(db: AsyncSession = Depends(get_async_db)):
     return {"status": "ok", "database": "connected", "redis": "connected"}
   
 app.include_router(pdf_router, prefix="/pdf", tags=["pdf"])
+app.include_router(auth_router, prefix="/auth", tags=["auth"])
 
 app.include_router(multiformat_router, prefix="/multiformat")
