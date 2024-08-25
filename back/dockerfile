@@ -12,6 +12,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     tesseract-ocr \
     ffmpeg \
     flac \
+    libavcodec-extra \
+    libavformat-dev \
+    libavutil-dev \
+    libswscale-dev \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
@@ -24,5 +28,6 @@ RUN adduser --disabled-password --gecos '' appuser
 USER appuser
 
 ENV PORT=8000
+ENV PATH="/usr/bin:${PATH}"
 
 CMD uvicorn main:app --host 0.0.0.0 --port $PORT --reload

@@ -16,9 +16,11 @@ client = OpenAI(
     api_key=os.environ.get("OPENAI_API_KEY"),
 )
 
-AudioSegment.converter = "ffmpeg"
-AudioSegment.ffmpeg = "ffmpeg"
-AudioSegment.ffprobe = "ffprobe"
+pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract'
+
+AudioSegment.converter = "/usr/bin/ffmpeg"
+AudioSegment.ffmpeg = "/usr/bin/ffmpeg"
+AudioSegment.ffprobe = "/usr/bin/ffprobe"
 
 
 async def process_file(filename, content):
