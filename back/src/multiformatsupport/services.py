@@ -7,7 +7,7 @@ import openai
 import PyPDF2
 import pytesseract
 import speech_recognition as sr
-from app.config import settings
+from ..app.config import settings
 from langchain.schema import AIMessage, HumanMessage, SystemMessage
 from PIL import Image
 from pydub import AudioSegment
