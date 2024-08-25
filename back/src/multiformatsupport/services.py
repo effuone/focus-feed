@@ -8,7 +8,7 @@ from typing import Dict, List
 import PyPDF2
 import pytesseract
 import speech_recognition as sr
-from app.config import settings
+
 from langchain.schema import AIMessage, HumanMessage
 from openai import OpenAI
 from PIL import Image
