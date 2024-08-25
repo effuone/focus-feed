@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 
@@ -34,12 +34,27 @@ async def submit(
             raise HTTPException(status_code=400, detail="Invalid YouTube URL")
         
         try:
-            transcript_text = process_youtube_url(youtube_url)
+            video_summary = summarize_with_openai_and_memory(youtube_url, memory)
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Failed to fetch transcript: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Failed to process video: {str(e)}")
         
-        summary = summarize_with_openai_and_memory(transcript_text, memory)
-        return {"youtube_url": youtube_url, "summary": summary}
+        return video_summary
 
     else:
         raise HTTPException(status_code=400, detail="No files or URL provided")
+    
+@router.post("/upload")
+async def process_youtube(
+    url: str = Form(...),
+    contentType: str = Form(...),
+    files: Optional[List[UploadFile]] = File(None),  # Make files optional
+    memory = Depends(get_memory)
+):
+    if contentType == "url" and "youtube.com/watch" in url:
+        try:
+            video_summary = summarize_with_openai_and_memory(url, memory)
+            return video_summary
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to process video: {str(e)}")
+    else:
+        raise HTTPException(status_code=400, detail="Invalid content type or YouTube URL")
