@@ -1,8 +1,8 @@
 from datetime import timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from pydantic import EmailStr
+from pydantic import BaseModel, EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -13,6 +13,12 @@ from .schemas import Token
 from .utils import create_access_token, get_password_hash, verify_password
 
 router = APIRouter()
+
+
+class UserCredentials(BaseModel):
+    email: EmailStr
+    password: str
+
 
 @router.post("/token", response_model=Token)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_async_db)):
@@ -34,8 +40,8 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.post("/register", response_model=Token)
-async def register_user(email: EmailStr, password: str, db: AsyncSession = Depends(get_async_db)):
-    query = select(User).where(User.email == email)
+async def register_user(credentials: UserCredentials = Body(...), db: AsyncSession = Depends(get_async_db)):
+    query = select(User).where(User.email == credentials.email)
     result = await db.execute(query)
     user = result.scalars().first()
 
@@ -45,8 +51,8 @@ async def register_user(email: EmailStr, password: str, db: AsyncSession = Depen
             detail="Email already registered",
         )
 
-    hashed_password = get_password_hash(password)
-    new_user = User(email=email, hashed_password=hashed_password)
+    hashed_password = get_password_hash(credentials.password)
+    new_user = User(email=credentials.email, hashed_password=hashed_password)
     db.add(new_user)
     await db.commit()
 

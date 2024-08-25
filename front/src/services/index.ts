@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const backendApiUrl = 'http://localhost:8000/';
+const backendApiUrl = 'https://focus-feed-production.up.railway.app';
 
 const backendApiInstance = axios.create({
   baseURL: backendApiUrl,
