@@ -56,7 +56,7 @@ websockets==12.0
 langchain
 PyPDF2 
 SpeechRecognition
-openai==0.28
+openai
 Pillow
 pytesseract
 pydub
