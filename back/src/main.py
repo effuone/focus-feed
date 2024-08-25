@@ -5,7 +5,7 @@ from .app.config import settings
 from .app.db import Base, async_engine, get_async_db
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException
-from multiformatsupport.api import router as multiformat_router
+from .multiformatsupport.api import router as multiformat_router
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.ext.asyncio import AsyncSession
