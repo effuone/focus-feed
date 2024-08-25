@@ -9,13 +9,14 @@ import openai
 import PyPDF2
 import pytesseract
 import speech_recognition as sr
-from .app.config import settings
 from langchain.schema import AIMessage, HumanMessage
 from openai import OpenAI
 from PIL import Image
 from pydub import AudioSegment
 from pytube import YouTube
 from youtube_transcript_api import YouTubeTranscriptApi
+
+from ..app.config import settings
 
 openai.api_key = settings.openai_api_key
 
