@@ -191,7 +191,6 @@ def summarize_with_openai_and_memory(youtube_url: str, memory) -> Dict[str, any]
         )},
         {"role": "user", "content": f"Please summarize the following text:\n\n{transcript_text}"}
     ]
-    # Include previous conversation history from memory
     for message in memory.chat_memory.messages:
         if isinstance(message, HumanMessage):
             messages.append({"role": "user", "content": message.content})
