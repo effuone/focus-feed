@@ -22,7 +22,7 @@ export default function Component() {
   const [uploadProgress, setUploadProgress] = useState<number>(0); // To track upload progress
   const [summaries, setSummaries] = useState<Array<{ filename?: string; url?: string; summary: string }>>([]);
   const [showForm, setShowForm] = useState<boolean>(true); // To control form visibility
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null); // To store image preview URL
+  const [previews, setPreviews] = useState<Array<{ url: string; type: string }>>([]); // To store image preview URLs
 
   const handleDragOver = (event: DragEvent<HTMLDivElement>): void => {
     event.preventDefault();
@@ -39,7 +39,7 @@ export default function Component() {
     if (event.dataTransfer.files && event.dataTransfer.files.length > 0) {
       const files = Array.from(event.dataTransfer.files);
       setSelectedFiles((prevFiles) => [...prevFiles, ...files]);
-      handlePreview(files[0]); // Preview the first dropped file if it’s an image
+      handlePreviews(files); // Generate previews for dropped files
     }
   };
 
@@ -47,24 +47,29 @@ export default function Component() {
     if (event.target.files) {
       const files = Array.from(event.target.files);
       setSelectedFiles((prevFiles) => [...prevFiles, ...files]);
-      handlePreview(files[0]); // Preview the first selected file if it’s an image
+      handlePreviews(files); // Generate previews for selected files
     }
   };
 
-  const handlePreview = (file: File): void => {
-    if (file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = () => setPreviewUrl(reader.result as string);
-      reader.readAsDataURL(file);
-    } else if (file.type === 'application/pdf') {
-      const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
-    } else if (file.type === 'audio/mpeg' || file.type === 'audio/mp3') {
-      const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
-    } else {
-      setPreviewUrl(null);
-    }
+  const handlePreviews = (files: File[]): void => {
+    const newPreviews = files.map((file) => {
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        return new Promise<{ url: string; type: string }>((resolve) => {
+          reader.onload = () => resolve({ url: reader.result as string, type: file.type });
+          reader.readAsDataURL(file);
+        });
+      } else if (file.type === 'application/pdf' || file.type.startsWith('audio/')) {
+        const url = URL.createObjectURL(file);
+        return Promise.resolve({ url, type: file.type });
+      } else {
+        return Promise.resolve({ url: '', type: '' });
+      }
+    });
+
+    Promise.all(newPreviews).then((results) => {
+      setPreviews((prevPreviews) => [...prevPreviews, ...results]);
+    });
   };
 
   const handleSubmit = async () => {
@@ -86,7 +91,7 @@ export default function Component() {
 
     try {
       const response = await axios.post(
-        'https://focus-feed-production.up.railway.app/multiformat/submit',
+        'http://localhost:8000/multiformat/submit',
         formData,
         {
           headers: {
@@ -109,7 +114,13 @@ export default function Component() {
       if (response.status === 200) {
         console.log('Submission successful.');
         setUploadProgress(100); // Set to 100% on successful completion
-        setSummaries([response.data]); // Assuming the response contains a single summary object
+        if (Array.isArray(response.data)) {
+          // Handle file summaries
+          setSummaries(response.data);
+        } else {
+          // Handle YouTube URL summary
+          setSummaries([response.data]);
+        }
         setShowForm(false); // Hide form after successful submission
       } else {
         console.error('Submission failed.');
@@ -125,7 +136,7 @@ export default function Component() {
 
   const removeFile = (index: number): void => {
     setSelectedFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
-    if (index === 0) setPreviewUrl(null); // Remove preview if the first file is removed
+    setPreviews((prevPreviews) => prevPreviews.filter((_, i) => i !== index));
   };
 
   return (
@@ -202,21 +213,25 @@ export default function Component() {
                 </Button>
               </div>
 
-              {previewUrl && (
+              {previews.length > 0 && (
                 <div className="my-4">
-                  <h3 className="text-sm font-medium mb-2">File Preview:</h3>
-                  {selectedFiles.length > 0 && selectedFiles[0].type.startsWith('image/') && (
-                    <img src={previewUrl} alt="Image Preview" className="rounded-md max-h-48" />
-                  )}
-                  {selectedFiles.length > 0 && selectedFiles[0].type === 'application/pdf' && (
-                    <embed src={previewUrl} type="application/pdf" width="100%" height="500px" />
-                  )}
-                  {selectedFiles.length > 0 && (selectedFiles[0].type === 'audio/mpeg' || selectedFiles[0].type === 'audio/mp3') && (
-                    <audio controls>
-                      <source src={previewUrl} type={selectedFiles[0].type} />
-                      Your browser does not support the audio element.
-                    </audio>
-                  )}
+                  <h3 className="text-sm font-medium mb-2">File Previews:</h3>
+                  {previews.map((preview, index) => (
+                    <div key={index} className="mb-2">
+                      {preview.type.startsWith('image/') && (
+                        <img src={preview.url} alt={`Image Preview ${index}`} className="rounded-md max-h-48" />
+                      )}
+                      {preview.type === 'application/pdf' && (
+                        <embed src={preview.url} type="application/pdf" width="100%" height="500px" />
+                      )}
+                      {(preview.type === 'audio/mpeg' || preview.type === 'audio/mp3') && (
+                        <audio controls>
+                          <source src={preview.url} type={preview.type} />
+                          Your browser does not support the audio element.
+                        </audio>
+                      )}
+                    </div>
+                  ))}
                 </div>
               )}
 
@@ -254,7 +269,12 @@ export default function Component() {
                     key={index}
                     className="bg-muted rounded-md p-2"
                   >
-                    {summaryObj.url && <p className="font-bold">URL: <a href={summaryObj.url} target="_blank" rel="noopener noreferrer">{summaryObj.url}</a></p>}
+                    {summaryObj.filename && (
+                      <p className="font-bold">File: {summaryObj.filename}</p>
+                    )}
+                    {summaryObj.url && (
+                      <p className="font-bold">URL: <a href={summaryObj.url} target="_blank" rel="noopener noreferrer">{summaryObj.url}</a></p>
+                    )}
                     <p>{summaryObj.summary}</p>
                   </li>
                 ))}
@@ -265,7 +285,7 @@ export default function Component() {
                 onClick={() => {
                   setShowForm(true);
                   setSelectedFiles([]);
-                  setPreviewUrl(null);
+                  setPreviews([]);
                   setSummaries([]);
                   setUploadProgress(0);
                   setUrlInput('');
