@@ -5,23 +5,29 @@ import os
 import subprocess
 from typing import Dict, List
 
-import openai
 import PyPDF2
 import pytesseract
 import speech_recognition as sr
 from app.config import settings
 from langchain.schema import AIMessage, HumanMessage
+from openai import OpenAI
 from PIL import Image
 from pydub import AudioSegment
 from pytube import YouTube
 from youtube_transcript_api import YouTubeTranscriptApi
 from pytube import YouTube
 
+<<<<<<< HEAD
 from openai import OpenAI
 
 from app.config import settings
 
 openai.api_key = settings.openai_api_key
+=======
+client = OpenAI(
+    api_key=os.environ.get("OPENAI_API_KEY"),
+)
+>>>>>>> main
 
 client = OpenAI(
     api_key=os.environ.get("OPENAI_API_KEY"),
@@ -121,6 +127,7 @@ def process_youtube_url(youtube_url: str) -> List[Dict[str, str]]:
             'text': entry['text']
         }
         for entry in transcript
+<<<<<<< HEAD
     ]
     
     return structured_transcript
@@ -158,8 +165,44 @@ def summarize_with_openai_and_memory(youtube_url: str, memory) -> Dict[str, any]
             "is explained or simplified to make the content accessible to a broad audience."
         )},
         {"role": "user", "content": f"Please summarize the following text:\n\n{transcript_text}"}
+=======
+>>>>>>> main
     ]
     
+    return structured_transcript
+
+def format_time(seconds: float) -> str:
+    minutes, seconds = divmod(int(seconds), 60)
+    hours, minutes = divmod(minutes, 60)
+    if hours > 0:
+        return f"{hours:02}:{minutes:02}:{seconds:02}"
+    else:
+        return f"{minutes:02}:{seconds:02}"
+
+def get_video_details(youtube_url: str) -> Dict[str, str]:
+    yt = YouTube(youtube_url)
+    video_details = {
+        "videoName": yt.title,
+        "authorName": yt.author,
+        "duration": format_time(yt.length)  # yt.length returns duration in seconds
+    }
+    return video_details
+
+def summarize_with_openai_and_memory(youtube_url: str, memory) -> Dict[str, any]:
+    transcript_with_timecodes = process_youtube_url(youtube_url)
+    transcript_text = "\n".join([entry['text'] for entry in transcript_with_timecodes])
+    
+    messages = [
+        {"role": "system", "content": (
+            "You are an advanced language model and assistant capable of analyzing, summarizing, and extracting key information from text. "
+            "Your task is to provide concise, accurate, and insightful summaries of complex content, while also identifying and highlighting "
+            "the most important points and insights. You should ensure that the summary is clear and easy to understand, even for someone who "
+            "may not be familiar with the original content. Additionally, you should format the summary in a way that is engaging and informative, "
+            "using bullet points or numbered lists where appropriate to organize the information. Please also ensure that any technical jargon "
+            "is explained or simplified to make the content accessible to a broad audience."
+        )},
+        {"role": "user", "content": f"Please summarize the following text:\n\n{transcript_text}"}
+    ]
     for message in memory.chat_memory.messages:
         if isinstance(message, HumanMessage):
             messages.append({"role": "user", "content": message.content})
