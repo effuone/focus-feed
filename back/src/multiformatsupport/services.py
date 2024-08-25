@@ -1,28 +1,35 @@
 import io
+import json
 import mimetypes
 import os
 import subprocess
 from typing import Dict, List
 
+import openai
 import PyPDF2
 import pytesseract
 import speech_recognition as sr
 from app.config import settings
 from langchain.schema import AIMessage, HumanMessage
-from openai import OpenAI
 from PIL import Image
 from pydub import AudioSegment
 from pytube import YouTube
 from youtube_transcript_api import YouTubeTranscriptApi
 from pytube import YouTube
 
+from openai import OpenAI
+
+from app.config import settings
+
+openai.api_key = settings.openai_api_key
+
 client = OpenAI(
     api_key=os.environ.get("OPENAI_API_KEY"),
 )
 
-AudioSegment.converter = "/usr/bin/ffmpeg"
-AudioSegment.ffmpeg = "/usr/bin/ffmpeg"
-AudioSegment.ffprobe = "/usr/bin/ffprobe"
+AudioSegment.converter = "ffmpeg"
+AudioSegment.ffmpeg = "ffmpeg"
+AudioSegment.ffprobe = "ffprobe"
 
 
 async def process_file(filename, content):
@@ -60,7 +67,7 @@ def process_audio(content, mime_type):
             f.write(content)
 
         result = subprocess.run(
-            ['/usr/bin/ffmpeg', '-y', '-i', input_path, '-f', 'wav', output_path],
+            ['ffmpeg', '-y', '-i', input_path, '-f', 'wav', output_path],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
 
@@ -152,6 +159,7 @@ def summarize_with_openai_and_memory(youtube_url: str, memory) -> Dict[str, any]
         )},
         {"role": "user", "content": f"Please summarize the following text:\n\n{transcript_text}"}
     ]
+    
     for message in memory.chat_memory.messages:
         if isinstance(message, HumanMessage):
             messages.append({"role": "user", "content": message.content})
@@ -167,7 +175,7 @@ def summarize_with_openai_and_memory(youtube_url: str, memory) -> Dict[str, any]
                 "properties": {
                     "summary": {
                         "type": "string",
-                        "description": "The generated summary"
+                        "description": "A concise summary of the given text"
                     },
                     "highlights": {
                         "type": "array",
@@ -184,22 +192,30 @@ def summarize_with_openai_and_memory(youtube_url: str, memory) -> Dict[str, any]
                         "description": "Key insights from the text"
                     }
                 },
-                "required": ["summary", "highlights", "insights"]
+                "required": ["summary", "highlights", "insights"],
+                "additionalProperties": False
             }
         }
     ]
 
+    # Request a completion from the model with function calling
     response = client.chat.completions.create(
         model="gpt-4o-mini",
-        messages=messages
+        messages=messages,
+        functions=functions,
+        function_call={"name": "generate_summary"}  # Force the model to call this function
     )
-
-    function_call = response.choices[0].message['function_call']
-    result = eval(function_call['arguments'])
     
-    summary = result['summary']
-    highlights = result['highlights']
-    insights = result['insights']
+    # Extract and parse the function call result
+    function_call = response.choices[0].message.function_call
+    if function_call:
+        arguments = function_call.arguments
+        if arguments:
+            result = json.loads(arguments)  # Parse the JSON string into a dictionary
+            
+            summary = result.get('summary', 'No summary available.')
+            highlights = result.get('highlights', [])
+            insights = result.get('insights', [])
 
     memory.chat_memory.add_user_message(transcript_text)
     memory.chat_memory.add_ai_message(summary)
