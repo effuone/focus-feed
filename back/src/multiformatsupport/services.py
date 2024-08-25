@@ -3,18 +3,19 @@ import mimetypes
 import os
 import subprocess
 
-import openai
 import PyPDF2
 import pytesseract
 import speech_recognition as sr
+from app.config import settings
 from langchain.schema import AIMessage, HumanMessage
+from openai import OpenAI
 from PIL import Image
 from pydub import AudioSegment
 from youtube_transcript_api import YouTubeTranscriptApi
 
-from ..app.config import settings
-
-openai.api_key = settings.openai_api_key
+client = OpenAI(
+    api_key=os.environ.get("OPENAI_API_KEY"),
+)
 
 AudioSegment.converter = "ffmpeg"
 AudioSegment.ffmpeg = "ffmpeg"
@@ -107,44 +108,28 @@ def process_youtube_url(youtube_url: str) -> str:
 
 
 def summarize_with_openai_and_memory(text, memory):
+    # Prepare the system message and the initial user message
     messages = [
-        {"role": "system", "content": "You are a helpful assistant that summarizes text."},
-        {"role": "user", "content": f"Please summarize the following text:\n\n{text}"}
+        {"role": "system", "content": "You are a helpful assistant that provides detailed summaries of text."},
+        {"role": "user", "content": f"Please summarize the following text in detail:\n\n{text}"}
     ]
     
+    # Include previous conversation history from memory
     for message in memory.chat_memory.messages:
         if isinstance(message, HumanMessage):
             messages.append({"role": "user", "content": message.content})
         elif isinstance(message, AIMessage):
             messages.append({"role": "assistant", "content": message.content})
 
-    functions = [
-        {
-            "name": "generate_summary",
-            "description": "Generates a summary of the given text",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "summary": {
-                        "type": "string",
-                        "description": "The generated summary"
-                    }
-                },
-                "required": ["summary"]
-            }
-        }
-    ]
 
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=messages,
-        functions=functions,
-        function_call={"name": "generate_summary"}
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",  # Change to the valid model you want to use
+        messages=messages
     )
 
-    function_call = response.choices[0].message['function_call']
-    summary = eval(function_call['arguments'])['summary']
-
+    # Extract the generated summary from the response
+    summary = response.choices[0].message.content.strip()
+    # Add the current user message and AI response to memory
     memory.chat_memory.add_user_message(text)
     memory.chat_memory.add_ai_message(summary)
 

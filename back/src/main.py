@@ -8,9 +8,9 @@ from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .app.config import settings
-from .app.db import Base, async_engine, get_async_db
-from .multiformatsupport.api import router as multiformat_router
+from app.config import settings
+from app.db import Base, async_engine, get_async_db
+from multiformatsupport.api import router as multiformat_router
 
 load_dotenv(Path(__file__).parent.parent / '.env')
 
