@@ -7,4 +7,8 @@ class Token(BaseModel):
 
 
 class TokenData(BaseModel):
+<<<<<<< HEAD
     email: str | None = None
+=======
+    email: str | None = None
+>>>>>>> 64d9d8a (basic auth with migration)

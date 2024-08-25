@@ -39,4 +39,8 @@ def decode_access_token(token: str):
             raise JWTError
         return email
     except JWTError:
+<<<<<<< HEAD
         return None
+=======
+        return None
+>>>>>>> 64d9d8a (basic auth with migration)
