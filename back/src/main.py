@@ -4,7 +4,7 @@ import redis.asyncio as aioredis
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from multiformatsupport.api import router as multiformat_router
+from .multiformatsupport.api import router as multiformat_router
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.ext.asyncio import AsyncSession
