@@ -90,6 +90,7 @@ export default function MultiModalForm({
 
     const formData = new FormData();
     let endpoint = '';
+    const token = localStorage.getItem('token');
 
     if (activeTab === 'file') {
       if (selectedFiles.length > 0) {
@@ -111,6 +112,7 @@ export default function MultiModalForm({
         const response = await backendApiInstance.post(endpoint, formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
+            'Authorization': `Bearer ${token}`,
           },
         });
 
