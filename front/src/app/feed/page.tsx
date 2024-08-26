@@ -1,5 +1,6 @@
 "use client";
 import MultiModalForm from "@/components/multi-modal-form";
+import { Button } from "@/components/ui/button"; // Ensure you have this import
 import VideoSummary, { VideoSummaryProps } from "@/components/video-summary";
 import { motion } from "framer-motion";
 import { useState } from "react";
@@ -22,9 +23,24 @@ export default function Feed() {
     }
   };
 
+  const handleGoBack = () => {
+    setVideoSummary(null);
+    setSubmitSummary(null);
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
+    <div className="min-h-screen  bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
       <div className="max-w-3xl mx-auto">
+        {(videoSummary || submitSummary) && (
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={handleGoBack}
+            className="mb-6 w-full bg-indigo-600 text-white hover:bg-indigo-900 hover:text-white"
+          >
+            Go Back
+          </Button>
+        )}
         {!videoSummary && !submitSummary ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -49,7 +65,6 @@ export default function Feed() {
             className="space-y-6"
           >
             {submitSummary.map((summary: any, index: number) => {
-
               return (
                 <motion.div
                   key={index}
@@ -71,7 +86,9 @@ export default function Feed() {
                     <Section title="Overview">
                       <Highlighter
                         highlightClassName="bg-yellow-200"
-                        searchWords={JSON.parse(summary.summary).highlight_terms}
+                        searchWords={
+                          JSON.parse(summary.summary).highlight_terms
+                        }
                         autoEscape={true}
                         textToHighlight={JSON.parse(summary.summary).overview}
                       />
@@ -80,44 +97,52 @@ export default function Feed() {
                     <Section title="Key Points">
                       <Highlighter
                         highlightClassName="bg-yellow-200"
-                        searchWords={JSON.parse(summary.summary).highlight_terms}
+                        searchWords={
+                          JSON.parse(summary.summary).highlight_terms
+                        }
                         autoEscape={true}
-                        textToHighlight={JSON.parse(summary.summary).details.key_points.join(
-                          " "
-                        )}
+                        textToHighlight={JSON.parse(
+                          summary.summary
+                        ).details.key_points.join(" ")}
                       />
                     </Section>
 
                     <Section title="Arguments">
                       <Highlighter
                         highlightClassName="bg-yellow-200"
-                        searchWords={JSON.parse(summary.summary).highlight_terms}
+                        searchWords={
+                          JSON.parse(summary.summary).highlight_terms
+                        }
                         autoEscape={true}
-                        textToHighlight={JSON.parse(summary.summary).details.arguments.join(
-                          " "
-                        )}
+                        textToHighlight={JSON.parse(
+                          summary.summary
+                        ).details.arguments.join(" ")}
                       />
                     </Section>
 
                     <Section title="Conclusions">
                       <Highlighter
                         highlightClassName="bg-yellow-200"
-                        searchWords={JSON.parse(summary.summary).highlight_terms}
+                        searchWords={
+                          JSON.parse(summary.summary).highlight_terms
+                        }
                         autoEscape={true}
-                        textToHighlight={JSON.parse(summary.summary).details.conclusions.join(
-                          " "
-                        )}
+                        textToHighlight={JSON.parse(
+                          summary.summary
+                        ).details.conclusions.join(" ")}
                       />
                     </Section>
 
                     <Section title="Insights">
                       <Highlighter
                         highlightClassName="bg-yellow-200"
-                        searchWords={JSON.parse(summary.summary).highlight_terms}
+                        searchWords={
+                          JSON.parse(summary.summary).highlight_terms
+                        }
                         autoEscape={true}
-                        textToHighlight={JSON.parse(summary.summary).details.insights.join(
-                          " "
-                        )}
+                        textToHighlight={JSON.parse(
+                          summary.summary
+                        ).details.insights.join(" ")}
                       />
                     </Section>
                   </div>
@@ -142,15 +167,4 @@ const Section = ({
     <h2 className="text-xl font-semibold mb-4 text-indigo-600">{title}</h2>
     {children}
   </div>
-);
-
-const List = ({ items }: { items: string[] }) => (
-  <ul className="space-y-2">
-    {items.map((item, i) => (
-      <li key={i} className="flex items-start">
-        <span className="text-indigo-500 mr-2">•</span>
-        <span className="text-gray-700">{item}</span>
-      </li>
-    ))}
-  </ul>
 );
