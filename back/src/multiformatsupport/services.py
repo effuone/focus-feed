@@ -139,6 +139,31 @@ def get_video_details(youtube_url: str) -> Dict[str, str]:
     }
     return video_details
 
+def summarize_with_openai_and_memory_files(text, memory):
+    messages = [
+        {"role": "system", "content": "You are a helpful assistant that provides detailed summaries of text."},
+        {"role": "user", "content": f"Please summarize the following text in detail:\n\n{text}"}
+    ]
+    
+
+    for message in memory.chat_memory.messages:
+        if isinstance(message, HumanMessage):
+            messages.append({"role": "user", "content": message.content})
+        elif isinstance(message, AIMessage):
+            messages.append({"role": "assistant", "content": message.content})
+
+
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=messages
+    )
+
+    summary = response.choices[0].message.content.strip()
+    memory.chat_memory.add_user_message(text)
+    memory.chat_memory.add_ai_message(summary)
+
+    return summary
+
 def summarize_with_openai_and_memory(youtube_url: str, memory) -> Dict[str, any]:
     transcript_with_timecodes = process_youtube_url(youtube_url)
     transcript_text = "\n".join([entry['text'] for entry in transcript_with_timecodes])
