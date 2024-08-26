@@ -144,7 +144,7 @@ def summarize_with_openai_and_memory_files(text, memory):
         },
         {
             "role": "user",
-            "content": f"Please provide a comprehensive and detailed summary of the following text. The summary should be organized into clear and logical paragraphs, thoroughly covering all main points, supporting details, and conclusions presented in the text. Ensure that the essence and nuances of the original content are preserved.\n\n{text}"
+            "content": f"Please provide a comprehensive and detailed summary of the following text. The summary should be organized into clear and logical paragraphs, thoroughly covering all main points, supporting details, and conclusions presented in the text. Ensure that the essence and nuances of the original content are preserved.\n\n{text}."
         }
     ]
 
