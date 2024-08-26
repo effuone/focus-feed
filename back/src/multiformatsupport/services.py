@@ -5,7 +5,6 @@ import os
 import subprocess
 from typing import Dict, List
 
-import openai
 import PyPDF2
 import pytesseract
 import speech_recognition as sr
@@ -15,10 +14,6 @@ from PIL import Image
 from pydub import AudioSegment
 from pytube import YouTube
 from youtube_transcript_api import YouTubeTranscriptApi
-
-from ..app.config import settings
-
-openai.api_key = settings.openai_api_key
 
 client = OpenAI(
     api_key=os.environ.get("OPENAI_API_KEY"),
@@ -174,7 +169,6 @@ def summarize_with_openai_and_memory_files(text, memory):
 def summarize_with_openai_and_memory(youtube_url: str, memory) -> Dict[str, any]:
     transcript_with_timecodes = process_youtube_url(youtube_url)
     transcript_text = "\n".join([entry['text'] for entry in transcript_with_timecodes])
-    
     messages = [
         {"role": "system", "content": (
             "You are an advanced language model and assistant capable of analyzing, summarizing, and extracting key information from text. "

@@ -15,51 +15,54 @@ export default function Component() {
   const router = useRouter()
 
   const handleSubmit = async (e: { preventDefault: () => void }) => {
-    e.preventDefault()
-    const url = isLogin ? "https://focus-feed-production.up.railway.app/auth/token" : "https://focus-feed-production.up.railway.app/auth/register"
+    e.preventDefault();
+    const url = isLogin 
+        ? "http://localhost:8000/auth/token" 
+        : "http://localhost:8000/auth/register";
     
     const body = isLogin 
-      ? new URLSearchParams({ username: email, password }) 
-      : JSON.stringify({ email, password })
+        ? new URLSearchParams({ username: email, password }) 
+        : JSON.stringify({ email, password });
 
     try {
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": isLogin ? "application/x-www-form-urlencoded" : "application/json",
-        },
-        body: body,
-      })
+        const response = await fetch(url, {
+            method: "POST",
+            headers: {
+                "Content-Type": isLogin ? "application/x-www-form-urlencoded" : "application/json",
+            },
+            body: body,
+        });
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        
-        // Handle different error formats
-        if (Array.isArray(errorData.detail)) {
-          const errorMessages = errorData.detail.map((err: any) => err.msg).join(", ")
-          setError(errorMessages)
-        } else if (typeof errorData.detail === 'string') {
-          setError(errorData.detail)
+        if (!response.ok) {
+            const errorData = await response.json();
+            // Error handling logic
+            if (Array.isArray(errorData.detail)) {
+                const errorMessages = errorData.detail.map((err: any) => err.msg).join(", ");
+                setError(errorMessages);
+            } else if (typeof errorData.detail === 'string') {
+                setError(errorData.detail);
+            } else {
+                setError("An error occurred. Please try again.");
+            }
         } else {
-          setError("An error occurred. Please try again.")
-        }
-      } else {
-        const data = await response.json()
-        localStorage.setItem("token", data.access_token)
-        
-        // Redirect based on login or registration
-        if (isLogin) {
-          router.push("/feed")
-        } else {
-          router.push("/onboarding")
-        }
+            const data = await response.json();
+            // Storing the token in localStorage
+            localStorage.setItem("token", data.access_token);
+            
+            // Redirect based on login or registration
+            if (isLogin) {
+                router.push("/feed");
+            } else {
+                router.push("/onboarding");
+            }
 
-        setError(null)  // Clear any previous error
-      }
+            setError(null);  // Clear any previous error
+        }
     } catch (err) {
-      setError("An error occurred. Please try again.")
+        setError("An error occurred. Please try again.");
     }
-  }
+};
+
 
   return (
     <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-background px-4 py-12 sm:px-6 lg:px-8">

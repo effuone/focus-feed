@@ -13,6 +13,7 @@ from .app.config import settings
 from .app.db import Base, async_engine, get_async_db
 from .auth.auth import router as auth_router
 from .pdf.api import router as pdf_router
+from .quiz.api import router as quiz_router
 
 load_dotenv(Path(__file__).parent.parent / '.env')
 
@@ -58,3 +59,4 @@ app.include_router(auth_router, prefix="/auth", tags=["auth"])
 app.include_router(multiformat_router, prefix="/multiformat")
 
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
+app.include_router(quiz_router, prefix="/quiz", tags=["quiz"])
