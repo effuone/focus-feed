@@ -1,7 +1,8 @@
-from ..app.db import Base
-from ..app.models import User
 from sqlalchemy import Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
+
+from ..app.db import Base
+from ..app.models import User
 
 
 class QuizSummary(Base):
