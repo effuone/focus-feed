@@ -1,5 +1,10 @@
 'use client';
 
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowLeft, ArrowRight, CheckCircle, Loader2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -10,9 +15,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react';
-import { useState } from 'react';
+import backendApiInstance from '@/services';
 
 interface Question {
   prompt: string;
@@ -66,6 +69,17 @@ export default function OnboardingQuiz() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
   const [userResponses, setUserResponses] = useState<Record<number, number>>({});
   const [isComplete, setIsComplete] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
+
+  const router = useRouter();
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/login');
+    }
+  }, [router]);
 
   const handleAnswerSelect = (questionIndex: number, answerIndex: number) => {
     setUserResponses((prevResponses) => ({
@@ -79,7 +93,7 @@ export default function OnboardingQuiz() {
       if (currentQuestionIndex < questions.length - 1) {
         setCurrentQuestionIndex((prevIndex) => prevIndex + 1);
       } else {
-        setIsComplete(true);
+        submitQuizResponses();
       }
     }
   };
@@ -88,22 +102,67 @@ export default function OnboardingQuiz() {
     setCurrentQuestionIndex((prevIndex) => Math.max(prevIndex - 1, 0));
   };
 
+  const submitQuizResponses = async () => {
+    setIsSubmitting(true);
+    setSubmissionError(null);
+    const token = localStorage.getItem('token');
+
+    if (!token) {
+      setSubmissionError('Authentication token not found. Please log in again.');
+      setIsSubmitting(false);
+      return;
+    }
+
+    const questionsArray = questions.map((q) => q.prompt);
+    const answersArray = questions.map(
+      (question, index) => question.options[userResponses[index]]
+    );
+
+    try {
+      const response = await backendApiInstance.post(
+        '/quiz/summarize',
+        {
+          questions: questionsArray,
+          answers: answersArray,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        setIsComplete(true);
+      } else {
+        setSubmissionError('Failed to submit responses. Please try again.');
+      }
+    } catch (error: any) {
+      console.error('Error submitting quiz responses:', error);
+      if (error.response && error.response.data && error.response.data.detail) {
+        setSubmissionError(error.response.data.detail);
+      } else {
+        setSubmissionError('An unexpected error occurred. Please try again.');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const renderOptions = (options: string[], questionIndex: number) => {
     return options.map((option, index) => (
       <motion.div
         key={index}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ delay: index * 0.1 }}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
+        transition={{ duration: 0.2, delay: index * 0.05 }}
       >
         <Button
-          variant='outline'
-          className={`w-full justify-start text-left p-4 ${
-            userResponses[questionIndex] === index
-              ? 'bg-primary text-primary-foreground'
-              : ''
-          }`}
+          variant={
+            userResponses[questionIndex] === index ? 'default' : 'outline'
+          }
+          className='w-full justify-start text-left p-4'
           onClick={() => handleAnswerSelect(questionIndex, index)}
         >
           {option}
@@ -117,9 +176,10 @@ export default function OnboardingQuiz() {
     return (
       <motion.div
         key={currentQuestionIndex}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
+        initial={{ opacity: 0, x: -50 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: 50 }}
+        transition={{ duration: 0.3 }}
         className='space-y-6'
       >
         <h3 className='text-2xl font-bold text-primary'>
@@ -151,7 +211,7 @@ export default function OnboardingQuiz() {
       <Button
         variant='outline'
         onClick={handlePreviousQuestion}
-        disabled={currentQuestionIndex === 0}
+        disabled={currentQuestionIndex === 0 || isSubmitting}
         className='flex items-center'
         aria-label='Previous Question'
       >
@@ -159,74 +219,100 @@ export default function OnboardingQuiz() {
       </Button>
       <Button
         onClick={handleNextQuestion}
-        disabled={userResponses[currentQuestionIndex] === undefined}
+        disabled={
+          userResponses[currentQuestionIndex] === undefined || isSubmitting
+        }
         className='flex items-center'
-        aria-label={currentQuestionIndex === questions.length - 1 ? 'Finish' : 'Next'}
+        aria-label={
+          currentQuestionIndex === questions.length - 1 ? 'Submit' : 'Next'
+        }
       >
-        {currentQuestionIndex === questions.length - 1 ? 'Finish' : 'Next'}{' '}
-        <ArrowRight className='ml-2 h-4 w-4' />
+        {isSubmitting ? (
+          <>
+            Submitting
+            <Loader2 className='ml-2 h-4 w-4 animate-spin' />
+          </>
+        ) : currentQuestionIndex === questions.length - 1 ? (
+          <>
+            Submit <CheckCircle className='ml-2 h-4 w-4' />
+          </>
+        ) : (
+          <>
+            Next <ArrowRight className='ml-2 h-4 w-4' />
+          </>
+        )}
       </Button>
     </div>
   );
 
   const renderSummary = () => (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
       className='space-y-6'
     >
       <div className='text-center'>
         <CheckCircle className='mx-auto h-16 w-16 text-green-500' />
         <h2 className='mt-4 text-3xl font-bold text-primary'>All Set!</h2>
         <p className='mt-2 text-muted-foreground'>
-          Thank you for completing the quiz. We&apos;re excited to personalize your
+          Thank you for completing the quiz. We're excited to personalize your
           FocusFeed experience!
         </p>
       </div>
       <div className='space-y-4'>
-        {Object.entries(userResponses).map(([questionIndex, answerIndex]) => (
-          <div
-            key={questionIndex}
-            className='bg-muted p-4 rounded-lg'
-          >
+        {questions.map((question, index) => (
+          <div key={index} className='bg-muted p-4 rounded-lg'>
             <div className='font-medium text-primary'>
-              {questions[parseInt(questionIndex)].prompt}
+              {question.prompt}
             </div>
             <div className='mt-1 text-muted-foreground'>
-              {questions[parseInt(questionIndex)].options[answerIndex]}
+              {question.options[userResponses[index]]}
             </div>
           </div>
         ))}
       </div>
-      <Button className='w-full'>Start Your FocusFeed Journey</Button>
+      <Button
+        className='w-full'
+        onClick={() => router.push('/feed')}
+      >
+        Start Your FocusFeed Journey
+      </Button>
     </motion.div>
   );
 
   return (
-    <Card className='w-full max-w-2xl mx-auto shadow-lg'>
-      {!isComplete && (
-        <CardHeader className='text-center'>
-          <CardTitle className='text-3xl font-bold text-primary'>
-            Welcome to FocusFeed!
-          </CardTitle>
-          <CardDescription>
-            Let&apos;s personalize your learning experience. Answer a few quick
-            questions to help us tailor content to your preferences.
-          </CardDescription>
-        </CardHeader>
-      )}
-      <CardContent className='space-y-6'>
-        <AnimatePresence mode='wait'>
-          {!isComplete ? renderQuestion() : renderSummary()}
-        </AnimatePresence>
-      </CardContent>
-      {!isComplete && (
-        <CardFooter className='flex flex-col space-y-4'>
-          {renderProgressIndicator()}
-          {renderNavigationButtons()}
-        </CardFooter>
-      )}
-    </Card>
+    <div className='flex min-h-screen items-center justify-center bg-background px-4 py-12 sm:px-6 lg:px-8'>
+      <Card className='w-full max-w-2xl mx-auto shadow-lg'>
+        {!isComplete && (
+          <CardHeader className='text-center'>
+            <CardTitle className='text-3xl font-bold text-primary'>
+              Welcome to FocusFeed!
+            </CardTitle>
+            <CardDescription>
+              Let's personalize your learning experience. Answer a few quick
+              questions to help us tailor content to your preferences.
+            </CardDescription>
+          </CardHeader>
+        )}
+        <CardContent className='space-y-6'>
+          {submissionError && (
+            <div className='text-red-500 text-center'>
+              {submissionError}
+            </div>
+          )}
+          <AnimatePresence mode='wait'>
+            {!isComplete ? renderQuestion() : renderSummary()}
+          </AnimatePresence>
+        </CardContent>
+        {!isComplete && (
+          <CardFooter className='flex flex-col space-y-4'>
+            {renderProgressIndicator()}
+            {renderNavigationButtons()}
+          </CardFooter>
+        )}
+      </Card>
+    </div>
   );
 }
