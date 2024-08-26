@@ -1,7 +1,26 @@
-from http.client import HTTPException
+import os
 import re
+from typing import Dict, List
+from pydantic import BaseModel
 import fitz
-from fastapi import UploadFile, APIRouter, File
+from fastapi import UploadFile, APIRouter, File, HTTPException
+from unsplash.api import Api
+from unsplash.auth import Auth
+
+import json
+from openai import OpenAI
+
+client = OpenAI(
+    api_key=os.environ.get("OPENAI_API_KEY"),
+)
+
+unsplash_auth = Auth(
+    os.environ.get("UNSPLASH_ACCESS_KEY"),
+    os.environ.get("UNSPLASH_SECRET_KEY"),
+    os.environ.get("UNSPLASH_REDIRECT_URI")
+)
+unsplash_api = Api(unsplash_auth)
+
 
 router = APIRouter()
 
@@ -83,3 +102,246 @@ async def extract_chapters(file: UploadFile = File(...)):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+class BookContent(BaseModel):
+    content: str
+
+class VideoData(BaseModel):
+    summary: str
+    title: str
+    backgroundColor: str
+    textColor: str
+    fontFamily: str
+    intro: Dict
+    scenes: List[Dict]
+    outro: Dict
+    
+def search_image(query):
+    try:
+        results = unsplash_api.search.photos(query, per_page=1)
+        if results and results['results']:
+            return results['results'][0].urls.regular
+    except Exception as e:
+        print(f"Error searching for image: {e}")
+    return None
+
+@router.post("/generate-video-data", response_model=VideoData)
+async def generate_video_data(book_content: BookContent):
+    messages = [
+        {"role": "system", "content": prompt},
+        {"role": "user", "content": f"Generate a video structure for the following book content:\n\n{book_content.content}"}
+    ]
+
+    functions = [
+        {
+            "name": "generate_video_structure",
+            "description": "Generates a video structure based on the given book content",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "summary": {"type": "string", "description": "A concise summary of the chapter"},
+                    "title": {"type": "string", "description": "Title of the video"},
+                    "backgroundColor": {"type": "string", "description": "Background color in hex format"},
+                    "textColor": {"type": "string", "description": "Text color in hex format"},
+                    "fontFamily": {"type": "string", "description": "Font family name"},
+                    "intro": {
+                        "type": "object",
+                        "properties": {
+                            "durationInSeconds": {"type": "number"},
+                            "content": {
+                                "type": "object",
+                                "properties": {
+                                    "heading": {"type": "string"},
+                                    "subheading": {"type": "string"}
+                                }
+                            },
+                            "voiceover": {"type": "string"},
+                            "animation": {
+                                "type": "object",
+                                "properties": {
+                                    "type": {"type": "string"},
+                                    "durationInSeconds": {"type": "number"}
+                                }
+                            },
+                            "style": {"type": "object"}
+                        }
+                    },
+                    "scenes": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "title": {"type": "string"},
+                                "description": {"type": "string"},
+                                "image": {"type": "string"},
+                                "durationInSeconds": {"type": "number"},
+                                "voiceover": {"type": "string"},
+                                "animation": {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {"type": "string"},
+                                        "durationInSeconds": {"type": "number"}
+                                    }
+                                },
+                                "style": {"type": "object"},
+                                "imageSearchKeywords": {"type": "string"}  
+                            }
+                        }
+                    },
+                    "outro": {
+                        "type": "object",
+                        "properties": {
+                            "durationInSeconds": {"type": "number"},
+                            "content": {
+                                "type": "object",
+                                "properties": {
+                                    "heading": {"type": "string"},
+                                    "subheading": {"type": "string"}
+                                }
+                            },
+                            "voiceover": {"type": "string"},
+                            "animation": {
+                                "type": "object",
+                                "properties": {
+                                    "type": {"type": "string"},
+                                    "durationInSeconds": {"type": "number"}
+                                }
+                            },
+                            "style": {"type": "object"}
+                        }
+                    }
+                },
+                "required": ["summary", "title", "backgroundColor", "textColor", "fontFamily", "intro", "scenes", "outro"]
+            }
+        }
+    ]
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini", 
+            messages=messages,
+            functions=functions,
+            function_call={"name": "generate_video_structure"}
+        )
+
+        function_call = response.choices[0].message.function_call
+        if function_call and function_call.arguments:
+            video_data = json.loads(function_call.arguments)
+            
+            for scene in video_data['scenes']:
+                image_query = scene.get('imageSearchKeyword', f"{video_data['title']} {scene['title']}")
+                image_url = search_image(image_query)
+                if image_url:
+                    scene['image'] = image_url
+            
+            return VideoData(**video_data)
+        else:
+            raise HTTPException(status_code=500, detail="Failed to generate video data")
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+
+    
+    
+prompt = """
+You are a creative assistant tasked with transforming a chapter from a book into a detailed JSON structure that will be used to create a video. The video should include an introduction, multiple scenes, and an outro, with each scene representing a key concept or part of the chapter. Each part should include animations, voiceovers, appropriate styles, and suggest a single keyword for image searches based on the content of each scene.
+
+Additionally, provide a concise summary of the chapter that captures its main ideas and themes.
+
+Given the following book chapter content:
+
+Generate a JSON object in the following format:
+
+{
+"summary": "A concise summary of the chapter",
+"backgroundColor": "#hexcolor",
+"textColor": "#hexcolor",
+"fontFamily": "font-family-name",
+"intro": {
+    "durationInSeconds": 5,
+    "content": {
+    "heading": "Intro Heading",
+    "subheading": "Intro Subheading"
+    },
+    "voiceover": "Voiceover text for the intro.",
+    "animation": {
+    "type": "zoom-out",
+    "durationInSeconds": 1
+    },
+    "style": {
+    "heading": {
+        "fontSize": "60px",
+        "fontWeight": "bold",
+        "textAlign": "center",
+        "marginBottom": "20px"
+    },
+    "subheading": {
+        "fontSize": "30px",
+        "textAlign": "center",
+        "marginBottom": "10px"
+    }
+    }
+},
+"scenes": [
+    {
+    "title": "Scene Title",
+    "description": "Scene Description",
+    "image": "Image URL",
+    "durationInSeconds": 10,
+    "voiceover": "Voiceover text for the scene.",
+    "animation": {
+        "type": "zoom-out",
+        "durationInSeconds": 1
+    },
+    "style": {
+        "title": {
+        "fontSize": "50px",
+        "fontWeight": "bold",
+        "textAlign": "center",
+        "marginBottom": "20px"
+        },
+        "description": {
+        "fontSize": "30px",
+        "textAlign": "center",
+        "marginBottom": "20px"
+        },
+        "image": {
+        "width": "100%",
+        "maxWidth": "600px",
+        "borderRadius": "10px",
+        "margin": "auto"
+        }
+    },
+    "imageSearchKeyword": "Single, specific keyword for high-quality image search"
+    },
+    // Add more scenes with correspondance to the chapter content
+],
+"outro": {
+    "durationInSeconds": 5,
+    "content": {
+    "heading": "Outro Heading",
+    "subheading": "Outro Subheading"
+    },
+    "voiceover": "Voiceover text for the outro.",
+    "animation": {
+    "type": "zoom-out",
+    "durationInSeconds": 1
+    },
+    "style": {
+    "heading": {
+        "fontSize": "60px",
+        "fontWeight": "bold",
+        "textAlign": "center",
+        "marginBottom": "20px"
+    },
+    "subheading": {
+        "fontSize": "30px",
+        "textAlign": "center",
+        "marginBottom": "10px"
+    }
+    }
+}
+}
+Generate this JSON structure by breaking down the chapter into key scenes, summarizing the content for each scene, suggesting animations, styles, and providing keywords for image searches that align with the tone and message of the chapter. Note: do not put in the keywords images from example.com, instead, use the Unsplash API to search for relevant images based on the keywords provided.
+Remember to include a concise summary of the chapter and provide a single, specific imageSearchKeyword for each scene that will result in a high-quality, relevant image.
+"""

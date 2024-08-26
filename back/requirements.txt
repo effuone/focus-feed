@@ -38,6 +38,7 @@ python-multipart==0.0.9
 PyYAML==6.0.2
 PyMuPDF
 pytube
+python-unsplash
 redis==5.0.8
 rich==13.7.1
 shellingham==1.5.4
