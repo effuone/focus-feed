@@ -39,7 +39,7 @@ const Home: NextPage = () => {
 
     try {
       const response = await fetch(
-        'http://localhost:8000/pdf/extract-chapters',
+        'https://focus-feed-production.up.railway.app/pdf/extract-chapters',
         {
           method: 'POST',
           body: formData,
@@ -62,7 +62,7 @@ const Home: NextPage = () => {
     setSelectedChapter(chapter);
     try {
       const response = await fetch(
-        'http://localhost:8000/pdf/generate-video-data',
+        'https://focus-feed-production.up.railway.app/pdf/generate-video-data',
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
