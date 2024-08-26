@@ -1,6 +1,16 @@
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from '../components/ui/card';
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from '../components/ui/tabs';
+import { ScrollArea } from '../components/ui/scroll-area';
 import { FC } from 'react';
 
 export interface VideoSummaryProps {

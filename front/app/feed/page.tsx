@@ -1,7 +1,9 @@
 'use client';
-import MultiModalForm from '@/components/multi-modal-form';
-import { Button } from '@/components/ui/button'; // Ensure you have this import
-import VideoSummary, { VideoSummaryProps } from '@/components/video-summary';
+import MultiModalForm from '../../components/multi-modal-form';
+import { Button } from '../../components/ui/button';
+import VideoSummary, {
+  VideoSummaryProps,
+} from '../../components/video-summary';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import Highlighter from 'react-highlight-words';

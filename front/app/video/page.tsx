@@ -1,16 +1,21 @@
 'use client';
 
+import { ScrollArea } from '@radix-ui/react-scroll-area';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@radix-ui/react-tabs';
 import { Player } from '@remotion/player';
 import type { NextPage } from 'next';
+import { Input } from '../../components/ui/input';
 import React, { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Button } from '../../components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '../../components/ui/card';
+import { expandVideoData } from '../../lib/utils';
 import RenderVideo from '../../remotion/MyComp/RenderVideo';
-import { expandVideoData } from 'lib/utils';
-import { VIDEO_FPS, VIDEO_HEIGHT, VIDEO_WIDTH } from 'types/constants';
+import { VIDEO_FPS, VIDEO_HEIGHT, VIDEO_WIDTH } from '../../types/constants';
 
 interface Chapter {
   page: number;

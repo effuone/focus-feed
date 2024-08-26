@@ -5,7 +5,7 @@ import { ArrowLeft, ArrowRight, CheckCircle, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-import { Button } from '@/components/ui/button';
+import { Button } from '../components/ui/button';
 import {
   Card,
   CardContent,
@@ -13,8 +13,8 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
+} from '../components/ui/card';
+import { Progress } from '../components/ui/progress';
 import backendApiInstance from '../services';
 
 interface Question {
