@@ -1,4 +1,4 @@
-import OnboardingQuiz from '@/components/quiz';
+import OnboardingQuiz from '../../components/quiz';
 
 export default function OnboardingPage() {
   return (

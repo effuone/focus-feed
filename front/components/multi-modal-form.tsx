@@ -1,14 +1,19 @@
-import { Button } from '@/components/ui/button';
+import { Button } from '../components/ui/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { VideoSummaryProps } from '@/components/video-summary';
+} from '../components/ui/card';
+import { Input } from '../components/ui/input';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '../components/ui/tabs';
+import { VideoSummaryProps } from '../components/video-summary';
 import {
   FileIcon,
   FileTextIcon,
@@ -354,15 +359,14 @@ const FilePreviews: React.FC<{
           </div>
         )}
         {preview.type === 'image' && preview.src && (
-  <Image
-    src={preview.src}
-    alt={`Preview ${index}`}
-    className="w-full h-40 object-cover"
-    layout="fill"
-    objectFit="cover"
-  />
-)}
-
+          <Image
+            src={preview.src}
+            alt={`Preview ${index}`}
+            className='w-full h-40 object-cover'
+            layout='fill'
+            objectFit='cover'
+          />
+        )}
       </div>
     ))}
   </div>
@@ -383,20 +387,20 @@ function renderFileIcon(preview: FilePreview) {
       return <VideoIcon className='h-8 w-8 text-green-500' />;
     case 'spreadsheet':
       return <FileTextIcon className='h-8 w-8 text-green-500' />;
-      case 'image':
-        return preview.src ? (
-          <Image
-            src={preview.src}
-            alt="Preview"
-            className="h-8 w-8 object-cover rounded"
-            layout="fixed"
-            width={32} // Set appropriate width for the image
-            height={32} // Set appropriate height for the image
-          />
-        ) : (
-          <FileIcon className="h-8 w-8 text-gray-500" />
-        );
-      
+    case 'image':
+      return preview.src ? (
+        <Image
+          src={preview.src}
+          alt='Preview'
+          className='h-8 w-8 object-cover rounded'
+          layout='fixed'
+          width={32} // Set appropriate width for the image
+          height={32} // Set appropriate height for the image
+        />
+      ) : (
+        <FileIcon className='h-8 w-8 text-gray-500' />
+      );
+
     default:
       return <FileIcon className='h-8 w-8 text-gray-500' />;
   }
