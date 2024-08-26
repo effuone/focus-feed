@@ -21,8 +21,8 @@ export default function AuthComponent() {
     e.preventDefault();
     setIsLoading(true);
     const url = isLogin 
-        ? "http://localhost:8000/auth/token" 
-        : "http://localhost:8000/auth/register";
+        ? "https://focus-feed-production.up.railway.app/auth/token" 
+        : "https://focus-feed-production.up.railway.app/auth/register";
     
     const body = isLogin 
         ? new URLSearchParams({ username: email, password }) 
