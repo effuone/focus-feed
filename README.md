@@ -1,13 +1,16 @@
-# FocusFeed
+FocusFeed
 
 **FocusFeed** is an innovative, AI-driven platform designed to revolutionize how we consume and learn from content. In a world where attention spans are shrinking, FocusFeed helps users stay engaged and focused by transforming complex information into short, impactful video summaries that are easy to digest. Whether you're learning from books, articles, podcasts, or videos, FocusFeed adapts to your unique learning style, making education as engaging and effortless as scrolling through social media.
 
 ## Features
 
-- **Personalized Learning Experience**: Customize your feed based on your interests, preferred content length, and learning goals. FocusFeed learns from your interactions to provide increasingly personalized content over time.
-- **Multi-Format Support**: Upload text, audio, or video content, and FocusFeed will create concise, easy-to-understand video summaries for each.
-- **TikTok-Style Presentation**: Summaries are presented in a short, engaging video format, similar to TikTok, which keeps users focused and reduces cognitive overload.
-- **Diverse Content Sources**: Whether it’s a book, article, podcast, or video, FocusFeed can integrate content from multiple sources and formats, delivering a cohesive learning experience.
+- **User-Centric Profiling**: Upon first login, users engage in a quiz that helps us understand their preferences and learning style, enabling a tailored content experience as they explore and consume information.
+
+- **Comprehensive File Upload**: Users can upload multiple files with ease and view detailed previews. Each file is summarized according to the user’s profile, featuring keyword highlights, overviews, conclusions, key points, arguments, and insights.
+
+- **YouTube Summarization**: Simply provide a YouTube URL and receive concise summaries that include key points, full transcripts, and actionable insights to enhance your understanding.
+
+- **Chapter-Based Book Summaries**: Dive into book summaries chapter by chapter, with the option to watch brief videos for each section. This feature makes it easy to grasp the essence of any book, one chapter at a time.
 
 ## Getting Started
 
@@ -31,17 +34,8 @@
 
    ```bash
    cd back
-   python -m venv venv
-   source venv/bin/activate
-   pip install -r requirements.txt
-   uvicorn main:app --reload
-   celery -A app.celery_worker.celery worker --loglevel=info
+   docker-compose up --build
    ```
-
-   - **Redis Setup** (if not using Docker):
-     ```bash
-     redis-server
-     ```
 
 3. **Frontend Setup (Next.js)**:
 
@@ -53,6 +47,7 @@
 
 4. **Access the Application**:
    - Open your browser and go to `http://localhost:3000` to view the FocusFeed interface.
+   - Open your browser and go to `http://localhost:8000/docs` to view the FastAPI Swagger documentation.
 
 ### Usage
 
