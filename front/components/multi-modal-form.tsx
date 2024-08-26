@@ -9,7 +9,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { VideoSummaryProps } from '@/components/video-summary';
-import backendApiInstance from '../services';
 import {
   FileIcon,
   FileTextIcon,
@@ -17,7 +16,9 @@ import {
   VideoIcon,
   XIcon,
 } from 'lucide-react';
+import Image from 'next/image';
 import React, { ChangeEvent, DragEvent, useEffect, useState } from 'react';
+import backendApiInstance from '../services';
 
 interface FilePreview {
   type: 'image' | 'pdf' | 'audio' | 'video' | 'spreadsheet' | 'file';
@@ -353,7 +354,7 @@ const FilePreviews: React.FC<{
           </div>
         )}
         {preview.type === 'image' && (
-          <img
+          <Image
             src={preview.src}
             alt={`Preview ${index}`}
             className='w-full h-40 object-cover'
@@ -381,7 +382,7 @@ function renderFileIcon(preview: FilePreview) {
       return <FileTextIcon className='h-8 w-8 text-green-500' />;
     case 'image':
       return preview.src ? (
-        <img
+        <Image
           src={preview.src}
           alt='Preview'
           className='h-8 w-8 object-cover rounded'

@@ -106,7 +106,7 @@ const Home: NextPage = () => {
             Book to Video Generator
           </h1>
           <p className='text-xl text-gray-600'>
-            Upload your book, select a chapter, and we'll generate a beautiful
+            Upload your book, select a chapter, and we&apos;ll generate a beautiful
             video based on its content.
           </p>
         </div>
@@ -161,7 +161,7 @@ const Home: NextPage = () => {
           <Card className='bg-white shadow-xl mb-8'>
             <CardContent className='p-6 text-center'>
               <p className='text-lg text-blue-500'>
-                Generating video for "{selectedChapter?.header}"...
+                Generating video for &quot;{selectedChapter?.header}&quot;...
               </p>
             </CardContent>
           </Card>
