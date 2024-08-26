@@ -130,28 +130,34 @@ def format_time(seconds: float) -> str:
     else:
         return f"{minutes:02}:{seconds:02}"
 
+
 def get_video_details(youtube_url: str) -> Dict[str, str]:
     yt = YouTube(youtube_url)
     video_details = {
         "videoName": yt.title,
         "authorName": yt.author,
-        "duration": format_time(yt.length)  # yt.length returns duration in seconds
+        "duration": format_time(yt.length)
     }
     return video_details
 
+
 def summarize_with_openai_and_memory_files(text, memory):
     messages = [
-        {"role": "system", "content": "You are a helpful assistant that provides detailed summaries of text."},
-        {"role": "user", "content": f"Please summarize the following text in detail:\n\n{text}"}
+        {
+            "role": "system",
+            "content": "You are ChatGPT, a highly capable language model trained by OpenAI. Your task is to read and comprehend extensive texts and produce detailed, well-structured summaries. Ensure that all key points, arguments, and details are captured accurately and presented clearly. Organize the summary into coherent paragraphs, maintaining the original context and intent."
+        },
+        {
+            "role": "user",
+            "content": f"Please provide a comprehensive and detailed summary of the following text. The summary should be organized into clear and logical paragraphs, thoroughly covering all main points, supporting details, and conclusions presented in the text. Ensure that the essence and nuances of the original content are preserved.\n\n{text}"
+        }
     ]
-    
 
     for message in memory.chat_memory.messages:
         if isinstance(message, HumanMessage):
             messages.append({"role": "user", "content": message.content})
         elif isinstance(message, AIMessage):
             messages.append({"role": "assistant", "content": message.content})
-
 
     response = client.chat.completions.create(
         model="gpt-4o-mini",
@@ -163,6 +169,7 @@ def summarize_with_openai_and_memory_files(text, memory):
     memory.chat_memory.add_ai_message(summary)
 
     return summary
+
 
 def summarize_with_openai_and_memory(youtube_url: str, memory) -> Dict[str, any]:
     transcript_with_timecodes = process_youtube_url(youtube_url)
