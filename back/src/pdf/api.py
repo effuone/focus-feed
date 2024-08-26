@@ -1,14 +1,14 @@
+import json
 import os
 import re
 from typing import Dict, List
-from pydantic import BaseModel
+
 import fitz
-from fastapi import UploadFile, APIRouter, File, HTTPException
+from fastapi import APIRouter, File, HTTPException, UploadFile
+from openai import OpenAI
+from pydantic import BaseModel
 from unsplash.api import Api
 from unsplash.auth import Auth
-
-import json
-from openai import OpenAI
 
 client = OpenAI(
     api_key=os.environ.get("OPENAI_API_KEY"),
