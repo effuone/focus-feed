@@ -1,8 +1,8 @@
-from app.db import get_async_db
-from auth.dependencies import get_current_user
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..app.db import get_async_db
+from ..auth.dependencies import get_current_user
 from .models import User
 from .schemas import QuizSummaryCreate, QuizSummaryResponse
 from .services import save_summary, summarize_text
