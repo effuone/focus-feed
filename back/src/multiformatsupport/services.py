@@ -144,7 +144,7 @@ def summarize_with_openai_and_memory_files(text, memory):
         },
         {
             "role": "user",
-            "content": f"""Please provide a comprehensive summary of the following text in JSON format:
+            "content": f"""Please provide in text language a comprehensive summary of the following text in JSON format:
 
 {text}
 

@@ -49,7 +49,6 @@ export default function Feed() {
             className="space-y-6"
           >
             {submitSummary.map((summary: any, index: number) => {
-              const parsedSummary = JSON.parse(summary.summary);
 
               return (
                 <motion.div
@@ -72,18 +71,18 @@ export default function Feed() {
                     <Section title="Overview">
                       <Highlighter
                         highlightClassName="bg-yellow-200"
-                        searchWords={parsedSummary.highlight_terms}
+                        searchWords={JSON.parse(summary.summary).highlight_terms}
                         autoEscape={true}
-                        textToHighlight={parsedSummary.overview}
+                        textToHighlight={JSON.parse(summary.summary).overview}
                       />
                     </Section>
 
                     <Section title="Key Points">
                       <Highlighter
                         highlightClassName="bg-yellow-200"
-                        searchWords={parsedSummary.highlight_terms}
+                        searchWords={JSON.parse(summary.summary).highlight_terms}
                         autoEscape={true}
-                        textToHighlight={parsedSummary.details.key_points.join(
+                        textToHighlight={JSON.parse(summary.summary).details.key_points.join(
                           " "
                         )}
                       />
@@ -92,9 +91,9 @@ export default function Feed() {
                     <Section title="Arguments">
                       <Highlighter
                         highlightClassName="bg-yellow-200"
-                        searchWords={parsedSummary.highlight_terms}
+                        searchWords={JSON.parse(summary.summary).highlight_terms}
                         autoEscape={true}
-                        textToHighlight={parsedSummary.details.arguments.join(
+                        textToHighlight={JSON.parse(summary.summary).details.arguments.join(
                           " "
                         )}
                       />
@@ -103,9 +102,9 @@ export default function Feed() {
                     <Section title="Conclusions">
                       <Highlighter
                         highlightClassName="bg-yellow-200"
-                        searchWords={parsedSummary.highlight_terms}
+                        searchWords={JSON.parse(summary.summary).highlight_terms}
                         autoEscape={true}
-                        textToHighlight={parsedSummary.details.conclusions.join(
+                        textToHighlight={JSON.parse(summary.summary).details.conclusions.join(
                           " "
                         )}
                       />
@@ -114,9 +113,9 @@ export default function Feed() {
                     <Section title="Insights">
                       <Highlighter
                         highlightClassName="bg-yellow-200"
-                        searchWords={parsedSummary.highlight_terms}
+                        searchWords={JSON.parse(summary.summary).highlight_terms}
                         autoEscape={true}
-                        textToHighlight={parsedSummary.details.insights.join(
+                        textToHighlight={JSON.parse(summary.summary).details.insights.join(
                           " "
                         )}
                       />
