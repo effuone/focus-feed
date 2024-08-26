@@ -140,11 +140,27 @@ def summarize_with_openai_and_memory_files(text, memory):
     messages = [
         {
             "role": "system",
-            "content": "You are ChatGPT, a highly capable language model trained by OpenAI. Your task is to read and comprehend extensive texts and produce detailed, well-structured summaries. Ensure that all key points, arguments, and details are captured accurately and presented clearly. Organize the summary into coherent paragraphs, maintaining the original context and intent."
+            "content": "You are an AI assistant trained to provide comprehensive summaries of text. Your task is to analyze the given text and produce a detailed, well-structured summary that captures all key points, arguments, and details accurately. Organize the summary into a specific JSON format."
         },
         {
             "role": "user",
-            "content": f"Please provide a comprehensive and detailed summary of the following text. The summary should be organized into clear and logical paragraphs, thoroughly covering all main points, supporting details, and conclusions presented in the text. Ensure that the essence and nuances of the original content are preserved.\n\n{text}."
+            "content": f"""Please provide a comprehensive summary of the following text in JSON format:
+
+{text}
+
+The summary should be structured as follows:
+{{
+    "overview": "A concise summary of the content, highlighting the main points, arguments, and conclusions. Organize this into clear paragraphs.",
+    "details": {{
+        "key_points": ["List of main points discussed in the text"],
+        "arguments": ["List of key arguments presented"],
+        "conclusions": ["List of main conclusions drawn"],
+        "insights": ["List of key insights or implications"]
+    }}
+    ""highlight_terms" : ["List of important terms or concepts that are central to the text"],
+}}
+
+Ensure that all major aspects of the text are covered and the essence of the original content is preserved."""
         }
     ]
 
@@ -156,7 +172,8 @@ def summarize_with_openai_and_memory_files(text, memory):
 
     response = client.chat.completions.create(
         model="gpt-4o-mini",
-        messages=messages
+        messages=messages,
+        response_format={"type": "json_object"}
     )
 
     summary = response.choices[0].message.content.strip()
